@@ -1,5 +1,5 @@
 <template>
-  <div class="login-page">
+  <div class="login-page" :style="{ background: `url(${doleOutsideBg}) no-repeat center center / cover` }">
     <div class="overlay"></div>
 
     <div class="card login-card">
@@ -37,23 +37,18 @@ import { ref, inject } from "vue";
 import { useRouter } from "vue-router";
 import axios from "axios";
 import Swal from "sweetalert2";
+
+// Import assets as variables so Vite can process them for production
 import doleLogo from "../../assets/logo/dole.png";
 import bagongphlogo from "../../assets/logo/bagongphlogo.png";
+import doleOutsideBg from "../../assets/logo/doleoutside.jpg";
 
-// Global API base (provided from main.js)
 const API_BASE = inject("API_BASE");
 const router = useRouter();
 
-// Reactive state
 const email = ref("");
 const password = ref("");
 const loading = ref(false);
-
-// Restore token on component mount (if any)
-const token = localStorage.getItem("auth_token");
-if (token) {
-  axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
-}
 
 const handleLogin = async () => {
   loading.value = true;
@@ -67,15 +62,15 @@ const handleLogin = async () => {
     if (res.data?.success && res.data?.token && res.data?.user) {
       const user = res.data.user;
 
-      // Store user data
       localStorage.setItem("user_id", String(user.id || ""));
       localStorage.setItem("auth_token", res.data.token);
       localStorage.setItem("userlevel_id", String(user.userlevel_id || 0));
       localStorage.setItem("user_name", String(user.username || ""));
       localStorage.setItem("profile_image", String(user.profile_image || ""));
       localStorage.setItem("division", String(user.division || ""));
+      localStorage.setItem("first_name", String(user.first_name || ""));
+      localStorage.setItem("last_name", String(user.last_name || ""));
 
-      // Set default Authorization header for future requests
       axios.defaults.headers.common["Authorization"] = `Bearer ${res.data.token}`;
 
       Swal.fire({
@@ -108,13 +103,11 @@ const handleLogin = async () => {
 </script>
 
 <style scoped>
-/* Your existing styles remain unchanged */
 .login-page {
   min-height: 100vh;
   display: grid;
   place-items: center;
   padding: 18px;
-  background: url("../../assets/logo/doleoutside.jpg") no-repeat center center / cover;
   position: relative;
   font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
 }
@@ -136,82 +129,17 @@ const handleLogin = async () => {
   box-shadow: 0 18px 60px rgba(0, 0, 0, 0.25);
 }
 
-.header {
-  text-align: center;
-  margin-bottom: 14px;
-}
-
-.logos {
-  display: flex;
-  justify-content: center;
-  gap: 12px;
-  flex-wrap: wrap;
-  margin-bottom: 10px;
-}
-
-.logo {
-  width: 72px;
-  height: auto;
-  max-width: 40vw;
-}
-
-.fw {
-  font-weight: 900;
-  margin: 0;
-  font-size: 14px;
-  color: #0f172a;
-}
-
-.form {
-  display: grid;
-  gap: 12px;
-}
-
-.field label {
-  display: block;
-  font-size: 12px;
-  font-weight: 800;
-  color: #334155;
-  margin-bottom: 6px;
-}
-
-.field input {
-  width: 100%;
-  padding: 11px 12px;
-  border: 1px solid #cbd5e1;
-  border-radius: 12px;
-  outline: none;
-  font-size: 14px;
-  background: #fff;
-}
-
-.field input:focus {
-  border-color: #1e3a8a;
-  box-shadow: 0 0 0 4px rgba(30, 58, 138, 0.12);
-}
-
-.btn {
-  width: 100%;
-  padding: 11px 12px;
-  border: none;
-  border-radius: 12px;
-  background: #1e3a8a;
-  color: #fff;
-  font-weight: 900;
-  cursor: pointer;
-}
-
-.btn:disabled {
-  opacity: 0.7;
-  cursor: not-allowed;
-}
-
-.footer {
-  margin-top: 14px;
-  text-align: center;
-  font-size: 12px;
-  color: #64748b;
-}
+.header { text-align: center; margin-bottom: 14px; }
+.logos { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; margin-bottom: 10px; }
+.logo { width: 72px; height: auto; max-width: 40vw; }
+.fw { font-weight: 900; margin: 0; font-size: 14px; color: #0f172a; }
+.form { display: grid; gap: 12px; }
+.field label { display: block; font-size: 12px; font-weight: 800; color: #334155; margin-bottom: 6px; }
+.field input { width: 100%; padding: 11px 12px; border: 1px solid #cbd5e1; border-radius: 12px; outline: none; font-size: 14px; background: #fff; }
+.field input:focus { border-color: #1e3a8a; box-shadow: 0 0 0 4px rgba(30, 58, 138, 0.12); }
+.btn { width: 100%; padding: 11px 12px; border: none; border-radius: 12px; background: #1e3a8a; color: #fff; font-weight: 900; cursor: pointer; }
+.btn:disabled { opacity: 0.7; cursor: not-allowed; }
+.footer { margin-top: 14px; text-align: center; font-size: 12px; color: #64748b; }
 
 @media (max-width: 420px) {
   .login-card { padding: 14px; }
