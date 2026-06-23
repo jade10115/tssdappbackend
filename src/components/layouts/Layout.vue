@@ -233,7 +233,7 @@ import doleLogo from "../../assets/logo/dole.png";
 
 export default {
   setup() {
-    const API_BASE = inject("API_BASE");
+    const API_BASE = inject("API_BASE") || "https://tssdapp-1.onrender.com/api";
 
     const isOpen = ref(true);
     const openOO1 = ref(false);
@@ -250,12 +250,12 @@ export default {
 
     onMounted(() => {
       const token = localStorage.getItem("auth_token");
-      if (!token) return (window.location.href = "/login"); // Hard redirect fallback
+      if (!token) return (window.location.href = "/login"); 
 
       // FORMAT IMAGE PATH FOR RENDER BACKEND
       let savedImage = localStorage.getItem("profile_image") || "";
       if (savedImage && !savedImage.startsWith("http")) {
-        const baseHost = API_BASE ? API_BASE.replace("/api", "") : "https://tssdapp-1.onrender.com";
+        const baseHost = API_BASE.replace("/api", "");
         savedImage = baseHost + (savedImage.startsWith('/') ? '' : '/') + savedImage;
       }
 
@@ -276,37 +276,36 @@ export default {
     const toggleSidebar = () => (isOpen.value = !isOpen.value);
 
     // ============================================
-    // THE BULLETPROOF HARD-RELOAD LOGOUT
+    // FIXED LOGOUT ORDER
     // ============================================
     const handleLogout = async () => {
-      // 1. Instantly nuke local storage to ensure local logout
-      localStorage.removeItem("auth_token");
-      localStorage.removeItem("user_id");
-      localStorage.removeItem("userlevel_id");
-      localStorage.removeItem("user_name");
-      localStorage.removeItem("profile_image");
-      localStorage.removeItem("division");
-      localStorage.removeItem("first_name");
-      localStorage.removeItem("last_name");
-      delete axios.defaults.headers.common["Authorization"];
-
-      // 2. Tell the backend to destroy the session (fire and forget)
       try {
-        await axios.post("https://tssdapp-1.onrender.com/api/logout");
+        // 1. Send the logout request FIRST, while the token still exists!
+        await axios.post(`${API_BASE}/logout`, {}, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("auth_token")}`
+          }
+        });
       } catch (e) {
-        // We ignore network/401 errors because the local memory is already safely wiped!
-      }
+        // Ignore network errors, proceed with local cleanup
+      } finally {
+        // 2. Wipe ALL local storage data securely
+        localStorage.clear();
+        delete axios.defaults.headers.common["Authorization"];
 
-      // 3. Show message and force the absolute browser refresh
-      Swal.fire({
-        title: "Logged out!",
-        icon: "success",
-        timer: 1000,
-        showConfirmButton: false,
-      }).then(() => {
-        // THIS IS THE MAGIC FIX: Forces browser to completely reload at the /login page
-        window.location.replace(window.location.origin + "/login");
-      });
+        // 3. Show SweetAlert message
+        Swal.fire({
+          title: "Logged out!",
+          icon: "success",
+          timer: 800,
+          showConfirmButton: false,
+        });
+
+        // 4. Force hard redirect to login page
+        setTimeout(() => {
+          window.location.href = "/login";
+        }, 800);
+      }
     };
 
     return {
