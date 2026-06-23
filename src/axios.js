@@ -1,9 +1,9 @@
 import axios from "axios";
 
-// ✅ Automatically use the Render URL in production, or localhost in development
-axios.defaults.baseURL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
+// ✅ Hardcode the live Render URL. Ignore Vercel environment variables completely!
+axios.defaults.baseURL = "https://tssdapp-1.onrender.com";
 
-// ✅ Set to false because you are using Bearer tokens, not cookies! (Prevents CORS errors)
+// ✅ Set to false because you are using Bearer tokens
 axios.defaults.withCredentials = false;
 
 // ✅ Automatically attach token to EVERY request globally
@@ -20,8 +20,7 @@ axios.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      localStorage.removeItem("auth_token");
-      localStorage.removeItem("userlevel_id");
+      localStorage.clear(); // Wipe everything securely
       window.location.href = "/login";
     }
     return Promise.reject(error);
