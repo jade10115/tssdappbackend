@@ -38,22 +38,30 @@ import { useRouter } from "vue-router";
 import axios from "axios";
 import Swal from "sweetalert2";
 
-// Import assets as variables so Vite can process them for production
+// Import assets as variables so Vite bundles them for Vercel
 import doleLogo from "../../assets/logo/dole.png";
 import bagongphlogo from "../../assets/logo/bagongphlogo.png";
 import doleOutsideBg from "../../assets/logo/doleoutside.jpg";
 
-const API_BASE = inject("API_BASE");
+// Connect to the API Base URL with a hardcoded fallback to your LIVE Render server
+const API_BASE = inject("API_BASE") || "https://tssdapp-1.onrender.com/api";
 const router = useRouter();
 
 const email = ref("");
 const password = ref("");
 const loading = ref(false);
 
+// Restore token if present
+const token = localStorage.getItem("auth_token");
+if (token) {
+  axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+}
+
 const handleLogin = async () => {
   loading.value = true;
 
   try {
+    // Send request to your live Render backend
     const res = await axios.post(`${API_BASE}/login`, {
       email: email.value,
       password: password.value,
@@ -62,6 +70,7 @@ const handleLogin = async () => {
     if (res.data?.success && res.data?.token && res.data?.user) {
       const user = res.data.user;
 
+      // Store user data
       localStorage.setItem("user_id", String(user.id || ""));
       localStorage.setItem("auth_token", res.data.token);
       localStorage.setItem("userlevel_id", String(user.userlevel_id || 0));
@@ -71,6 +80,7 @@ const handleLogin = async () => {
       localStorage.setItem("first_name", String(user.first_name || ""));
       localStorage.setItem("last_name", String(user.last_name || ""));
 
+      // Set default Authorization header for future requests
       axios.defaults.headers.common["Authorization"] = `Bearer ${res.data.token}`;
 
       Swal.fire({
