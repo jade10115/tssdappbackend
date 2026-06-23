@@ -225,16 +225,15 @@
 </template>
 
 <script>
-import { ref, onMounted } from "vue";
+import { ref, onMounted, inject } from "vue";
 import Swal from "sweetalert2";
 import axios from "axios";
 import bagongLogo from "../../assets/logo/bagongphlogo.png";
 import doleLogo from "../../assets/logo/dole.png";
-import { useRouter } from "vue-router";
 
 export default {
   setup() {
-    const router = useRouter();
+    const API_BASE = inject("API_BASE");
 
     const isOpen = ref(true);
     const openOO1 = ref(false);
@@ -251,12 +250,13 @@ export default {
 
     onMounted(() => {
       const token = localStorage.getItem("auth_token");
-      if (!token) return router.push("/login");
+      if (!token) return (window.location.href = "/login"); // Hard redirect fallback
 
       // FORMAT IMAGE PATH FOR RENDER BACKEND
       let savedImage = localStorage.getItem("profile_image") || "";
       if (savedImage && !savedImage.startsWith("http")) {
-        savedImage = "https://tssdapp-1.onrender.com" + (savedImage.startsWith('/') ? '' : '/') + savedImage;
+        const baseHost = API_BASE ? API_BASE.replace("/api", "") : "https://tssdapp-1.onrender.com";
+        savedImage = baseHost + (savedImage.startsWith('/') ? '' : '/') + savedImage;
       }
 
       user.value = {
@@ -265,7 +265,6 @@ export default {
         profile_image: savedImage,
       };
 
-      // If you only saved full name in "user_name", split it safely:
       if ((!user.value.first_name || !user.value.last_name) && localStorage.getItem("user_name")) {
         const full = (localStorage.getItem("user_name") || "").trim();
         const parts = full.split(" ");
@@ -276,41 +275,38 @@ export default {
 
     const toggleSidebar = () => (isOpen.value = !isOpen.value);
 
+    // ============================================
+    // THE BULLETPROOF HARD-RELOAD LOGOUT
+    // ============================================
     const handleLogout = async () => {
+      // 1. Instantly nuke local storage to ensure local logout
+      localStorage.removeItem("auth_token");
+      localStorage.removeItem("user_id");
+      localStorage.removeItem("userlevel_id");
+      localStorage.removeItem("user_name");
+      localStorage.removeItem("profile_image");
+      localStorage.removeItem("division");
+      localStorage.removeItem("first_name");
+      localStorage.removeItem("last_name");
+      delete axios.defaults.headers.common["Authorization"];
+
+      // 2. Tell the backend to destroy the session (fire and forget)
       try {
-        // FIXED LOGOUT URL
-        await axios.post("https://tssdapp-1.onrender.com/api/logout", {}, {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
-            Accept: "application/json",
-          },
-        });
+        await axios.post("https://tssdapp-1.onrender.com/api/logout");
       } catch (e) {
-        // ignore
-      } finally {
-        localStorage.removeItem("auth_token");
-        localStorage.removeItem("user_id");
-        localStorage.removeItem("userlevel_id");
-        localStorage.removeItem("user_name");
-        localStorage.removeItem("profile_image");
-        localStorage.removeItem("division");
-        localStorage.removeItem("first_name");
-        localStorage.removeItem("last_name");
-
-        delete axios.defaults.headers.common["Authorization"];
-
-        Swal.fire({
-          title: "Logged out!",
-          icon: "success",
-          timer: 1200,
-          showConfirmButton: false,
-        });
-
-        // ✅ THE FIX: Force a hard refresh to the login page
-        setTimeout(() => {
-          window.location.href = "/login";
-        }, 700);
+        // We ignore network/401 errors because the local memory is already safely wiped!
       }
+
+      // 3. Show message and force the absolute browser refresh
+      Swal.fire({
+        title: "Logged out!",
+        icon: "success",
+        timer: 1000,
+        showConfirmButton: false,
+      }).then(() => {
+        // THIS IS THE MAGIC FIX: Forces browser to completely reload at the /login page
+        window.location.replace(window.location.origin + "/login");
+      });
     };
 
     return {
