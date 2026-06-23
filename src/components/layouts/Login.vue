@@ -41,7 +41,7 @@ import Swal from "sweetalert2";
 // Import assets as variables so Vite bundles them for Vercel
 import doleLogo from "../../assets/logo/dole.png";
 import bagongphlogo from "../../assets/logo/bagongphlogo.png";
-import doleOutsideBg from "../../assets/logo/doleoutside.jpg";
+import doleOutsideBg from "../../assets/logo/doleoutside.JPG";
 
 // Connect to the API Base URL with a hardcoded fallback to your LIVE Render server
 const API_BASE = inject("API_BASE") || "https://tssdapp-1.onrender.com/api";
