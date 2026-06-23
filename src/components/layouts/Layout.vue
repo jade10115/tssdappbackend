@@ -225,7 +225,7 @@
 </template>
 
 <script>
-import { ref, onMounted, inject } from "vue";
+import { ref, onMounted } from "vue";
 import Swal from "sweetalert2";
 import axios from "axios";
 import bagongLogo from "../../assets/logo/bagongphlogo.png";
@@ -233,7 +233,8 @@ import doleLogo from "../../assets/logo/dole.png";
 
 export default {
   setup() {
-    const API_BASE = inject("API_BASE") || "https://tssdapp-1.onrender.com/api";
+    // 🔴 KILLED THE NGROK INJECT! HARDCODED RENDER API:
+    const API_BASE = "https://tssdapp-1.onrender.com/api";
 
     const isOpen = ref(true);
     const openOO1 = ref(false);
@@ -275,25 +276,19 @@ export default {
 
     const toggleSidebar = () => (isOpen.value = !isOpen.value);
 
-    // ============================================
-    // FIXED LOGOUT ORDER
-    // ============================================
     const handleLogout = async () => {
       try {
-        // 1. Send the logout request FIRST, while the token still exists!
         await axios.post(`${API_BASE}/logout`, {}, {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("auth_token")}`
           }
         });
       } catch (e) {
-        // Ignore network errors, proceed with local cleanup
+        // Ignore network errors
       } finally {
-        // 2. Wipe ALL local storage data securely
         localStorage.clear();
         delete axios.defaults.headers.common["Authorization"];
 
-        // 3. Show SweetAlert message
         Swal.fire({
           title: "Logged out!",
           icon: "success",
@@ -301,7 +296,6 @@ export default {
           showConfirmButton: false,
         });
 
-        // 4. Force hard redirect to login page
         setTimeout(() => {
           window.location.href = "/login";
         }, 800);
@@ -345,7 +339,6 @@ export default {
 .sidebar-link:hover { background-color: #e9ecef; color: #0d6efd !important; transform: translateX(2px); }
 .emp-child-icon { font-size: 0.95rem; }
 
-/* ✅ MOBILE */
 @media (max-width: 768px) {
   .sidebar-open { width: 80vw; max-width: 320px; }
   .sidebar-closed { width: 0; border: none !important; }

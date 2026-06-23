@@ -43,7 +43,7 @@ import doleLogo from "../../assets/logo/dole.png";
 import bagongphlogo from "../../assets/logo/bagongphlogo.png";
 import doleOutsideBg from "../../assets/logo/doleoutside.JPG";
 
-// ✅ Hardcode the Render API exactly so ngrok cannot interfere
+// 🔴 KILLED THE NGROK INJECT! HARDCODED RENDER API:
 const API_BASE = "https://tssdapp-1.onrender.com/api";
 const router = useRouter();
 
@@ -51,7 +51,6 @@ const email = ref("");
 const password = ref("");
 const loading = ref(false);
 
-// Restore token if present
 const token = localStorage.getItem("auth_token");
 if (token) {
   axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
@@ -110,32 +109,9 @@ const handleLogin = async () => {
 </script>
 
 <style scoped>
-.login-page {
-  min-height: 100vh;
-  display: grid;
-  place-items: center;
-  padding: 18px;
-  position: relative;
-  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-}
-
-.overlay {
-  position: absolute;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.45);
-}
-
-.login-card {
-  position: relative;
-  z-index: 1;
-  width: min(420px, 100%);
-  background: rgba(255, 255, 255, 0.92);
-  border: 1px solid rgba(226, 232, 240, 0.9);
-  border-radius: 16px;
-  padding: 18px;
-  box-shadow: 0 18px 60px rgba(0, 0, 0, 0.25);
-}
-
+.login-page { min-height: 100vh; display: grid; place-items: center; padding: 18px; position: relative; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; }
+.overlay { position: absolute; inset: 0; background: rgba(0, 0, 0, 0.45); }
+.login-card { position: relative; z-index: 1; width: min(420px, 100%); background: rgba(255, 255, 255, 0.92); border: 1px solid rgba(226, 232, 240, 0.9); border-radius: 16px; padding: 18px; box-shadow: 0 18px 60px rgba(0, 0, 0, 0.25); }
 .header { text-align: center; margin-bottom: 14px; }
 .logos { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; margin-bottom: 10px; }
 .logo { width: 72px; height: auto; max-width: 40vw; }
@@ -147,9 +123,5 @@ const handleLogin = async () => {
 .btn { width: 100%; padding: 11px 12px; border: none; border-radius: 12px; background: #1e3a8a; color: #fff; font-weight: 900; cursor: pointer; }
 .btn:disabled { opacity: 0.7; cursor: not-allowed; }
 .footer { margin-top: 14px; text-align: center; font-size: 12px; color: #64748b; }
-
-@media (max-width: 420px) {
-  .login-card { padding: 14px; }
-  .logo { width: 60px; }
-}
+@media (max-width: 420px) { .login-card { padding: 14px; } .logo { width: 60px; } }
 </style>
