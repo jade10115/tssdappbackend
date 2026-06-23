@@ -46,14 +46,14 @@
 
           <transition name="slide-fade">
             <div v-show="openOO1 && isOpen" class="ps-4">
-              <router-link to="/oo1/a" class="d-block p-2 text-decoration-none text-dark rounded mb-1 sidebar-link" active-class="active-link">
-                GIP
+              <router-link to="Gipoffice" class="d-block p-2 text-decoration-none text-dark rounded mb-1 sidebar-link" active-class="active-link">
+                GIP Offices
               </router-link>
-              <router-link to="/oo1/b" class="d-block p-2 text-decoration-none text-dark rounded mb-1 sidebar-link" active-class="active-link">
-                SPES
+              <router-link to="Gip" class="d-block p-2 text-decoration-none text-dark rounded mb-1 sidebar-link" active-class="active-link">
+                GIP Employees
               </router-link>
               <router-link to="/oo1/c" class="d-block p-2 text-decoration-none text-dark rounded sidebar-link" active-class="active-link">
-                Other Program
+               SPES
               </router-link>
             </div>
           </transition>
@@ -111,8 +111,8 @@
               <router-link to="/adlstatus" class="d-block p-2 text-decoration-none text-dark rounded sidebar-link" active-class="active-link">
                 ADL Status
               </router-link>
-              <router-link to="/Cashadvance" class="d-block p-2 text-decoration-none text-dark rounded sidebar-link" active-class="active-link">
-                Cash advance
+                <router-link to="/Cashadvance" class="d-block p-2 text-decoration-none text-dark rounded sidebar-link" active-class="active-link">
+              Cash advance
               </router-link>
             </div>
           </transition>
@@ -225,7 +225,7 @@
 </template>
 
 <script>
-import { ref, onMounted, inject } from "vue";
+import { ref, onMounted } from "vue";
 import Swal from "sweetalert2";
 import axios from "axios";
 import bagongLogo from "../../assets/logo/bagongphlogo.png";
@@ -235,7 +235,6 @@ import { useRouter } from "vue-router";
 export default {
   setup() {
     const router = useRouter();
-    const API_BASE = inject("API_BASE"); // Dynamic base URL injection
 
     const isOpen = ref(true);
     const openOO1 = ref(false);
@@ -254,11 +253,10 @@ export default {
       const token = localStorage.getItem("auth_token");
       if (!token) return router.push("/login");
 
-      // Format image path correctly for Render backend fallback
+      // FORMAT IMAGE PATH FOR RENDER BACKEND
       let savedImage = localStorage.getItem("profile_image") || "";
       if (savedImage && !savedImage.startsWith("http")) {
-        const baseHost = API_BASE ? API_BASE.replace("/api", "") : "https://tssdapp-1.onrender.com";
-        savedImage = baseHost + (savedImage.startsWith('/') ? '' : '/') + savedImage;
+        savedImage = "https://tssdapp-1.onrender.com" + (savedImage.startsWith('/') ? '' : '/') + savedImage;
       }
 
       user.value = {
@@ -267,6 +265,7 @@ export default {
         profile_image: savedImage,
       };
 
+      // If you only saved full name in "user_name", split it safely:
       if ((!user.value.first_name || !user.value.last_name) && localStorage.getItem("user_name")) {
         const full = (localStorage.getItem("user_name") || "").trim();
         const parts = full.split(" ");
@@ -279,15 +278,15 @@ export default {
 
     const handleLogout = async () => {
       try {
-        // Uses injected API URL environment dynamically
-        await axios.post(`${API_BASE}/logout`, {}, {
+        // FIXED LOGOUT URL
+        await axios.post("https://tssdapp-1.onrender.com/api/logout", {}, {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
             Accept: "application/json",
           },
         });
       } catch (e) {
-        // Fallback or ignore network error block
+        // ignore
       } finally {
         localStorage.removeItem("auth_token");
         localStorage.removeItem("user_id");
@@ -307,7 +306,10 @@ export default {
           showConfirmButton: false,
         });
 
-        setTimeout(() => router.push("/login"), 700);
+        // ✅ THE FIX: Force a hard refresh to the login page
+        setTimeout(() => {
+          window.location.href = "/login";
+        }, 700);
       }
     };
 
@@ -348,6 +350,7 @@ export default {
 .sidebar-link:hover { background-color: #e9ecef; color: #0d6efd !important; transform: translateX(2px); }
 .emp-child-icon { font-size: 0.95rem; }
 
+/* ✅ MOBILE */
 @media (max-width: 768px) {
   .sidebar-open { width: 80vw; max-width: 320px; }
   .sidebar-closed { width: 0; border: none !important; }
