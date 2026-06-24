@@ -1,5 +1,5 @@
 <template>
-  <div class="login-page" :style="{ background: `url(${doleOutsideBg}) no-repeat center center / cover` }">
+  <div class="login-page">
     <div class="overlay"></div>
 
     <div class="card login-card">
@@ -27,101 +27,203 @@
         </button>
       </form>
 
-      <div class="footer">© 2025 DOLE Region VIII</div>
+      <div class="footer">© 2026 DOLE Region VIII</div>
     </div>
   </div>
 </template>
 
-<script setup>
-import { ref } from "vue";
-import { useRouter } from "vue-router";
+<script>
 import axios from "axios";
 import Swal from "sweetalert2";
-
-// Import assets
 import doleLogo from "../../assets/logo/dole.png";
 import bagongphlogo from "../../assets/logo/bagongphlogo.png";
-import doleOutsideBg from "../../assets/logo/doleoutside.JPG";
 
-// 🔴 KILLED THE NGROK INJECT! HARDCODED RENDER API:
-const API_BASE = "https://tssdapp-1.onrender.com/api";
-const router = useRouter();
+// ✅ Point to your LIVE Render backend, not localhost
+axios.defaults.baseURL = "https://tssdapp-1.onrender.com";
 
-const email = ref("");
-const password = ref("");
-const loading = ref(false);
+// ✅ Must be false to match your backend CORS settings for Bearer tokens
+axios.defaults.withCredentials = false;
 
+// restore token
 const token = localStorage.getItem("auth_token");
-if (token) {
-  axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
-}
+if (token) axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
 
-const handleLogin = async () => {
-  loading.value = true;
+export default {
+  data() {
+    return {
+      email: "",
+      password: "",
+      loading: false,
+      doleLogo,
+      bagongphlogo,
+    };
+  },
 
-  try {
-    const res = await axios.post(`${API_BASE}/login`, {
-      email: email.value,
-      password: password.value,
-    });
+  methods: {
+    async handleLogin() {
+      this.loading = true;
 
-    if (res.data?.success && res.data?.token && res.data?.user) {
-      const user = res.data.user;
+      try {
+        const res = await axios.post("/api/login", {
+          email: this.email,
+          password: this.password,
+        });
 
-      localStorage.setItem("user_id", String(user.id || ""));
-      localStorage.setItem("auth_token", res.data.token);
-      localStorage.setItem("userlevel_id", String(user.userlevel_id || 0));
-      localStorage.setItem("user_name", String(user.username || ""));
-      localStorage.setItem("profile_image", String(user.profile_image || ""));
-      localStorage.setItem("division", String(user.division || ""));
-      localStorage.setItem("first_name", String(user.first_name || ""));
-      localStorage.setItem("last_name", String(user.last_name || ""));
+        if (res.data?.success && res.data?.token && res.data?.user) {
+          const user = res.data.user;
 
-      axios.defaults.headers.common["Authorization"] = `Bearer ${res.data.token}`;
+          // ✅ REQUIRED for calendar created_by
+          localStorage.setItem("user_id", String(user.id || ""));
 
-      Swal.fire({
-        title: `Welcome, ${user.username || "User"}!`,
-        text: "Successfully logged in",
-        icon: "success",
-        position: "top-end",
-        toast: true,
-        timer: 1600,
-        showConfirmButton: false,
-      });
+          // ✅ keep your existing keys
+          localStorage.setItem("auth_token", res.data.token);
+          localStorage.setItem("userlevel_id", String(user.userlevel_id || 0));
+          localStorage.setItem("user_name", String(user.username || ""));
+          localStorage.setItem("profile_image", String(user.profile_image || ""));
+          localStorage.setItem("division", String(user.division || ""));
 
-      const userLevel = Number(user.userlevel_id || 0);
+          axios.defaults.headers.common["Authorization"] = `Bearer ${res.data.token}`;
 
-      setTimeout(() => {
-        if (userLevel === 1) router.push("/dashboard");
-        else if (userLevel === 2) router.push("/supply/DashboardSupply");
-        else if (userLevel === 3) router.push("/fo/dashboard");
-        else router.push("/dashboard");
-      }, 700);
-    } else {
-      Swal.fire("Invalid Login", res.data?.message || "Invalid credentials.", "error");
-    }
-  } catch (error) {
-    Swal.fire("Login Error", error.response?.data?.message || "Server error.", "error");
-  } finally {
-    loading.value = false;
-  }
+          Swal.fire({
+            title: `Welcome, ${user.username || "User"}!`,
+            text: "Successfully logged in",
+            icon: "success",
+            position: "top-end",
+            toast: true,
+            timer: 1600,
+            showConfirmButton: false,
+          });
+
+          const ul = Number(user.userlevel_id || 0);
+
+          setTimeout(() => {
+            if (ul === 1) return this.$router.push("/dashboard");
+            if (ul === 2) return this.$router.push("/supply/DashboardSupply");
+            if (ul === 3) return this.$router.push("/fo/dashboard");
+            return this.$router.push("/dashboard");
+          }, 700);
+
+          return;
+        }
+
+        Swal.fire("Invalid Login", res.data?.message || "Invalid credentials.", "error");
+      } catch (error) {
+        Swal.fire("Login Error", error.response?.data?.message || "Server error.", "error");
+      } finally {
+        this.loading = false;
+      }
+    },
+  },
 };
 </script>
 
 <style scoped>
-.login-page { min-height: 100vh; display: grid; place-items: center; padding: 18px; position: relative; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; }
-.overlay { position: absolute; inset: 0; background: rgba(0, 0, 0, 0.45); }
-.login-card { position: relative; z-index: 1; width: min(420px, 100%); background: rgba(255, 255, 255, 0.92); border: 1px solid rgba(226, 232, 240, 0.9); border-radius: 16px; padding: 18px; box-shadow: 0 18px 60px rgba(0, 0, 0, 0.25); }
-.header { text-align: center; margin-bottom: 14px; }
-.logos { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; margin-bottom: 10px; }
-.logo { width: 72px; height: auto; max-width: 40vw; }
-.fw { font-weight: 900; margin: 0; font-size: 14px; color: #0f172a; }
-.form { display: grid; gap: 12px; }
-.field label { display: block; font-size: 12px; font-weight: 800; color: #334155; margin-bottom: 6px; }
-.field input { width: 100%; padding: 11px 12px; border: 1px solid #cbd5e1; border-radius: 12px; outline: none; font-size: 14px; background: #fff; }
-.field input:focus { border-color: #1e3a8a; box-shadow: 0 0 0 4px rgba(30, 58, 138, 0.12); }
-.btn { width: 100%; padding: 11px 12px; border: none; border-radius: 12px; background: #1e3a8a; color: #fff; font-weight: 900; cursor: pointer; }
-.btn:disabled { opacity: 0.7; cursor: not-allowed; }
-.footer { margin-top: 14px; text-align: center; font-size: 12px; color: #64748b; }
-@media (max-width: 420px) { .login-card { padding: 14px; } .logo { width: 60px; } }
+.login-page {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  background: url("../../assets/logo/doleoutside.jpg") no-repeat center center / cover;
+  position: relative;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+}
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+}
+
+.login-card {
+  position: relative;
+  z-index: 1;
+  width: min(420px, 100%);
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  border-radius: 16px;
+  padding: 18px;
+  box-shadow: 0 18px 60px rgba(0, 0, 0, 0.25);
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 14px;
+}
+
+.logos {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+.logo {
+  width: 72px;
+  height: auto;
+  max-width: 40vw;
+}
+
+.fw {
+  font-weight: 900;
+  margin: 0;
+  font-size: 14px;
+  color: #0f172a;
+}
+
+.form {
+  display: grid;
+  gap: 12px;
+}
+
+.field label {
+  display: block;
+  font-size: 12px;
+  font-weight: 800;
+  color: #334155;
+  margin-bottom: 6px;
+}
+
+.field input {
+  width: 100%;
+  padding: 11px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  outline: none;
+  font-size: 14px;
+  background: #fff;
+}
+
+.field input:focus {
+  border-color: #1e3a8a;
+  box-shadow: 0 0 0 4px rgba(30, 58, 138, 0.12);
+}
+
+.btn {
+  width: 100%;
+  padding: 11px 12px;
+  border: none;
+  border-radius: 12px;
+  background: #1e3a8a;
+  color: #fff;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.footer {
+  margin-top: 14px;
+  text-align: center;
+  font-size: 12px;
+  color: #64748b;
+}
+
+@media (max-width: 420px) {
+  .login-card { padding: 14px; }
+  .logo { width: 60px; }
+}
 </style>
