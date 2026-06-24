@@ -457,10 +457,12 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue';
-import axios from 'axios';
 import Swal from 'sweetalert2';
+import axios from '../../axios.js'
 
-const API_BASE = import.meta.env.VITE_API_URL || '/api';
+// Keep the /api prefix so it appends correctly to your https://tssdapp-1.onrender.com baseURL
+const API = '/api'
+
 
 const documents     = ref([]);
 const documentTypes = ref([]);
